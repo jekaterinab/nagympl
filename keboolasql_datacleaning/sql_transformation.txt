@@ -1,0 +1,158 @@
+-------------------------------------------------
+----sloupecek unique_id - nad kompletni tabulkou se studenty
+
+create or replace  table "komplet"
+as
+select concat("SCHOOLCOURSE_ID", '_', "YEAR", '_', row_number() over (order by "SCHOOLCOURSE_ID", "YEAR")) as unique_id, *  from "komplet";
+
+------------------------------------------------
+-- rok: očištění o případná desetinná místa -> na integer - ja to delam v pythonu
+
+UPDATE students SET year=TO_NUMBER(REPLACE(year, ',', '.'));
+
+UPDATE students SET schoolcourse_id=TO_NUMBER(schoolcourse_id);
+
+UPDATE students SET schoolcourse_year_student_id=TO_NUMBER(REPLACE(schoolcourse_year_student_id, ',', '.'));
+
+UPDATE students SET is_admitted=TO_NUMBER(REPLACE(is_admitted, ',', '.'));
+
+--UPDATE students SET is_school_exam=TO_NUMBER(REPLACE(is_school_exam, ',', '.'));
+
+UPDATE students SET is_school_exam=TO_BOOLEAN(is_school_exam);
+
+--UPDATE students SET is_min_criteria=TO_NUMBER(REPLACE(is_min_criteria, ',', '.'));
+
+UPDATE students SET is_min_criteria=TO_BOOLEAN(is_min_criteria);
+--------------------------------------------------
+-- doplnění NULL do prázdných políček a místo 'nekonal'
+UPDATE students SET "SUM" = NULL WHERE "SUM" = '';
+
+UPDATE students SET math = NULL WHERE math = '';
+
+UPDATE students SET math = NULL WHERE math = 'nekonal';
+
+UPDATE students SET math = NULL WHERE math = 'NaN';
+
+UPDATE students SET czech = NULL WHERE czech = '';
+
+UPDATE students SET czech = NULL WHERE czech = 'NaN';
+
+UPDATE students SET czech = NULL WHERE czech = 'nekonal';
+
+UPDATE students SET grades = NULL WHERE grades = '';
+
+UPDATE students SET sp = NULL WHERE sp = '';
+
+UPDATE students SET vr = NULL WHERE vr = '';
+
+UPDATE students SET aj = NULL WHERE aj = '';
+---------------------------------------------------
+
+----------------uprava students (skoly Kata S.) pred unionem
+UPDATE students SET other = NULL WHERE other = '';
+
+UPDATE students SET contests = NULL WHERE contests = '';
+
+UPDATE students SET vr=TO_DOUBLE(vr);
+
+UPDATE students SET sp=TO_DOUBLE(sp);
+
+UPDATE students SET aj=TO_DOUBLE(aj);
+-----------------------------------------------
+
+------------------------- úprava čárek na desetinné tečky a převod na čísla (ja to delam v pythonu)
+UPDATE students SET "SUM"=TO_DOUBLE(REPLACE("SUM", ',', '.'));
+
+UPDATE students SET math=TO_DOUBLE(REPLACE(math, ',', '.'));
+
+UPDATE students SET czech=TO_DOUBLE(REPLACE(czech, ',', '.'));
+
+UPDATE students SET grades=TO_DOUBLE(REPLACE(grades, ',', '.'));
+
+UPDATE students SET contests=TO_DOUBLE(REPLACE(contests, ',', '.'));
+
+UPDATE students SET other=TO_DOUBLE(REPLACE(other, ',', '.'));
+
+----------------------------------------------------
+-- přidání hodnot do IS_CONTESTS
+-
+UPDATE students SET is_contests=TO_BOOLEAN(is_contests);
+UPDATE students SET is_contests='true' where contests is not null;
+UPDATE students SET is_contests='false' where contests is null; 
+
+-----------!!! toto plati pro celou  skolu, ne pro jednotlivy zapis, muzeme mit chybne hodnoty NULL 
+-----------!!!misto 0 tam, kde se souteze pocitaji
+---------------------------------------------------
+
+
+----------------uprava pred unionem a union prvnich dvou tabulek se studenty na hackathonu
+
+ALTER TABLE STUDENTS_UPGRADE
+DROP COLUMN "SCHOOLCOURSE_YEAR_STUDENT_ID";
+
+ALTER TABLE "0060713KOMPLET"
+DROP COLUMN "SCHOOLCOURSE_YEAR_STUDENT_ID";
+
+CREATE OR REPLACE TABLE KOMPLET as (
+  SELECT * FROM STUDENTS_UPGRADE
+union
+SELECT * FROM "0060713KOMPLET");
+
+---------------------------------------------------------
+---------joiny dalsich tabulek, hackathon
+
+create or replace temporary table pokus
+as
+SELECT * 
+FROM "founders"
+NATURAL JOIN "schools";
+
+create or replace temporary table pokus_new
+as
+SELECT * 
+FROM "courses"
+NATURAL JOIN "course-in-school";
+
+create or replace temporary table pokus_final
+as
+SELECT * 
+FROM pokus_new
+NATURAL JOIN "schools";
+
+-------------------------------------
+-----------prejmenovani sloupce is admited na admitted_id v students2 ((chyba v datovem modelu????))
+
+
+ALTER TABLE  "students3"
+ADD "ADMITTED_ID" VARCHAR(5);
+
+UPDATE "students3"
+SET "ADMITTED_ID" = "IS_ADMITTED";
+
+----------------------------------------------
+create or replace temporary table students_admitted //studenti + admitted
+as
+SELECT * 
+FROM "admitted"
+NATURAL JOIN "students3";
+
+create or replace table "final"
+as
+SELECT * 
+FROM "students3"
+NATURAL JOIN  "schools";
+------------------------------------------------------------------
+------------------------------------------------------------------
+----------uprava finalni tabulky
+
+alter table "finalhackathon2"
+drop column "PO";
+
+alter table "finalhackathon2"
+drop column "IS_ADMITTED";
+
+alter table "finalhackathon2"
+drop column "SCHOOLCOURSE_YEAR_STUDENT_ID";
+
+-----------------------------------------------------------
+---------------------------------------------------------

@@ -1,0 +1,114 @@
+//union do 1 tabulky
+create or replace table USTAVNI
+as
+(select 
+ID,
+SCHOOLCOURSE_ID,
+RANK,
+GRADES,
+CONTESTS,
+MATH,
+CZECH,
+"SUM",
+YEAR
+from "15_2017") 
+
+union all
+
+(select  
+ID,
+SCHOOLCOURSE_ID,
+RANK,
+GRADES,
+CONTESTS,
+MATH,
+CZECH,
+"SUM",
+YEAR
+from "15_2018") 
+
+union all
+
+(select  
+ID,
+SCHOOLCOURSE_ID,
+RANK,
+GRADES,
+CONTESTS,
+MATH,
+CZECH,
+"SUM",
+YEAR
+from "15_2019") 
+
+union all
+
+(select 
+ID,
+SCHOOLCOURSE_ID,
+RANK,
+GRADES,
+CONTESTS,
+MATH,
+CZECH,
+"SUM",
+YEAR
+from "15_2020");
+
+//kontrola, oprava chyb
+update USTAVNI set CZECH = 9 where ID = 8075 and YEAR = 2019;
+
+update USTAVNI set MATH = 8 where ID = 8144 and YEAR = 2019;
+
+//nove sloupce
+alter table USTAVNI add column is_min_criteria boolean;
+
+update USTAVNI set is_min_criteria = false;
+
+alter table USTAVNI add column is_contests boolean;
+
+update USTAVNI set is_contests = true;
+
+alter table USTAVNI add column vr float null;
+
+update USTAVNI set vr = null;
+
+alter table USTAVNI add column sp float null;
+
+update USTAVNI set sp = null;
+
+alter table USTAVNI add column aj float null;
+
+update USTAVNI set aj = null;
+
+alter table USTAVNI  add column other float;
+
+update USTAVNI set other = null;
+
+alter table USTAVNI add column other_txt text;
+
+alter table USTAVNI add column min_criteria_txt text;
+
+alter table USTAVNI add column is_school_exam boolean;
+
+update USTAVNI set is_school_exam  = false;
+
+//uprava is_admitted
+alter table USTAVNI add column admitted_id number;
+
+update USTAVNI set admitted_id = 1 where year = 2017 and to_number(rank) < 57;
+
+update USTAVNI set admitted_id = 1 where year = 2018 and to_number(rank)  < 58;
+
+update USTAVNI set admitted_id = 1 where year = 2019 and to_number(rank) < 58;
+
+update USTAVNI set admitted_id = 1 where year = 2020 and to_number(rank) < 61;
+
+update USTAVNI set admitted_id = 0 where admitted_id is NULL;
+
+create or replace table USTAVNI 
+as
+select
+ID, SCHOOLCOURSE_ID, year, rank, admitted_id, sum, math, czech, grades, is_school_exam,
+sp, vr, aj, other, other_txt, is_contests, contests, is_min_criteria, min_criteria_txt
+from USTAVNI;

@@ -1,9 +1,0 @@
---uprava skoly, kde body se nasobily 2, na puvodni hodnotu 
-
-UPDATE students SET "SUM"=round((TO_NUMBER("SUM")/2),2) where schoolcourse_id ='1781';
-
-UPDATE students3 SET math=round((TO_NUMBER(math)/2),2) where schoolcourse_id ='1781';
-
-UPDATE students3 SET czech=round((TO_NUMBER(czech)/2),2) where schoolcourse_id ='1781';
-
------------------------------------------------------
